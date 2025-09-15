@@ -28,9 +28,7 @@ int parse_input(long_number_t *first_num, long_number_t *second_num, size_t *len
     if (strchr(first_num_str, '.') == NULL && (strchr(first_num_str, 'e') == NULL || strchr(first_num_str, 'E') == NULL))
         input_int(first_num, first_num_str);
     if (strchr(first_num_str, '.') != NULL || (strchr(first_num_str, 'e') != NULL || strchr(first_num_str, 'E') != NULL))
-    {
         input_float(first_num, first_num_str, len_first_num);
-    }
 
     // printf("Введите второе число для (деления или умножения) в формате +-123.123, обязательно знак\n");
     // printf("+---------1---------2---------3---------4\n");
@@ -64,9 +62,7 @@ int input_int(long_number_t *num, char num_str[41])
         printf("Предупреждение: число обрезано до 30 цифр\n");
     }
     else
-    {
         strcpy(num->mantissa, num_str + 1);
-    }
 
     if (strchr(num_str, '.') == NULL && (strchr(num_str, 'e') == NULL || strchr(num_str, 'E') == NULL))
     {
@@ -136,17 +132,13 @@ void find_mantissa_float(char *str, char mantissa[40])
 
     // Извлекаем все цифры, убирая ведущие нули
     for (int i = 0; i < end_pos && j < 30; i++)
-    {
         if (isdigit(str[i]))
-        {
             if (found_non_zero || str[i] != '0')
             {
                 mantissa[j] = str[i];
                 j++;
                 found_non_zero = 1;
             }
-        }
-    }
 
     if (j == 0)
     {
@@ -166,9 +158,7 @@ void find_exp(char *str, char *sign_e, int *exponent)
 
     int explicit_exp = 0;
     if (e_pos)
-    {
         explicit_exp = atoi(e_pos + 1);
-    }
 
     // 2. Найдём точку
     char *dot_pos = strchr(str, '.');
@@ -198,21 +188,15 @@ void find_exp(char *str, char *sign_e, int *exponent)
     if (dot_pos)
     {
         if (idx_first_digit < (dot_pos - str))
-        {
             // первая цифра до точки
             exp_val += (dot_pos - str) - idx_first_digit;
-        }
         else
-        {
             // первая цифра после точки
             exp_val -= (idx_first_digit - (dot_pos - str));
-        }
     }
     else
-    {
         // точки нет
         exp_val += (strlen(str) - idx_first_digit);
-    }
 
     // 5. Записываем знак/значение
     if (exp_val >= 0)
@@ -243,9 +227,7 @@ void add_sign_if_missing(char *str, size_t *len_str)
     {
         // Сдвигаем строку вправо на 1 позицию
         for (int i = *len_str; i >= 0; i--)
-        {
             str[i + 1] = str[i];
-        }
         // Добавляем знак +
         str[0] = '+';
         (*len_str)++;
