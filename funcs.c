@@ -4,6 +4,25 @@
 #define BASE 10000 // Основание системы счисления (4 цифры в блоке)
 #define MAX_BLOCKS 10
 
+// Функция нормализации мантиссы к формату 0.xxxxx
+void normalize_mantissa(char *mantissa, int *exponent, char *sign_e)
+{
+    // Убираем ведущие нули
+    int start = 0;
+    while (mantissa[start] == '0' && mantissa[start + 1] != '\0')
+        start++;
+
+    if (start > 0)
+    {
+        memmove(mantissa, mantissa + start, strlen(mantissa) - start + 1);
+        // Корректируем порядок
+        if (*sign_e == '+')
+            *exponent -= start;
+        else
+            *exponent += start;
+    }
+}
+
 // Вспомогательная функция для преобразования строки в массив блоков
 void string_to_blocks(const char *str, int blocks[], int *num_blocks)
 {
@@ -99,6 +118,7 @@ int multiply_long_numbers(const long_number_t *a, const long_number_t *b, long_n
 
     string_to_blocks(a->mantissa, a_blocks, &a_len);
     string_to_blocks(b->mantissa, b_blocks, &b_len);
+
     // 4. Перемножаем блоки
     multiply_blocks(a_blocks, a_len, b_blocks, b_len, res_blocks, &res_len);
 
@@ -106,30 +126,41 @@ int multiply_long_numbers(const long_number_t *a, const long_number_t *b, long_n
     char temp_result[61] = {0};
     blocks_to_string(res_blocks, res_len, temp_result);
 
-    // 6. ВЫЧИСЛЯЕМ РЕАЛЬНЫЙ ПОРЯДОК
-    result->exponent = a->exponent + b->exponent;
-    result->sign_e = (a->sign_e == b->sign_e) ? '+' : '-';
+    // 6. Вычисляем порядок результата
+    // Простое правило: порядки складываются + коррекция на длину
+    int exp_a = (a->sign_e == '+') ? a->exponent : -a->exponent;
+    int exp_b = (b->sign_e == '+') ? b->exponent : -b->exponent;
 
-    // 7. КОРРЕКТИРУЕМ ПОРЯДОК ИЗ-ЗА УМНОЖЕНИЯ ДРОБЕЙ
-    int actual_len = strlen(temp_result);
-    int expected_len = strlen(a->mantissa) + strlen(b->mantissa);
+    // Простая формула: порядки складываются + коррекция на переполнение
+    int result_digits = strlen(temp_result);
+    int expected_digits = strlen(a->mantissa) + strlen(b->mantissa);
 
-    if (actual_len > expected_len)
+    int total_exp = exp_a + exp_b;
+
+    // Коррекция на переполнение (если результат короче)
+    if (result_digits < expected_digits)
     {
-        // Появилась целая часть
-        result->exponent += (actual_len - expected_len);
+        total_exp -= (expected_digits - result_digits);
     }
 
-    // 8. Обрезаем до 30 знаков
-    if (strlen(temp_result) > 30)
+    if (total_exp >= 0)
     {
-        // TODO: Добавить округление
-        temp_result[30] = '\0';
+        result->sign_e = '+';
+        result->exponent = total_exp;
     }
-    if (temp_result[0] != '0')
+    else
     {
-        result->exponent += 1;
+        result->sign_e = '-';
+        result->exponent = -total_exp;
     }
+
+    // 7. Обрезаем до 40 знаков
+    if (strlen(temp_result) > 40)
+    {
+        temp_result[40] = '\0';
+    }
+
+    // 8. Копируем мантиссу
     strcpy(result->mantissa, temp_result);
 
     return 0;
