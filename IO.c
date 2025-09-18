@@ -1,4 +1,5 @@
 #include "IO.h"
+#include "funcs.h"
 int count_letter(char *str, char ch);
 void add_null_start_float(char *str, size_t *len_str);
 int input_float(long_number_t *num, char num_str[41], size_t *len_num);
@@ -29,6 +30,7 @@ int parse_input(long_number_t *first_num, long_number_t *second_num, size_t *len
         input_int(first_num, first_num_str);
     if (strchr(first_num_str, '.') != NULL || (strchr(first_num_str, 'e') != NULL || strchr(first_num_str, 'E') != NULL))
         input_float(first_num, first_num_str, len_first_num);
+    // printf("mantissa = %s, expo = %d\n", first_num->mantissa, first_num->exponent);
 
     // printf("Введите второе число для (деления или умножения) в формате +-123.123, обязательно знак\n");
     // printf("+---------1---------2---------3---------4\n");
@@ -92,7 +94,10 @@ int input_float(long_number_t *num, char num_str[41], size_t *len_num)
     else
     {
         find_mantissa_float(num_str, num->mantissa);
+        // printf("mantissa = %s\n", num->mantissa);
         find_exp(num_str, &num->sign_e, &num->exponent);
+        // printf("exp = %d\n", num->exponent);
+
         // printf("sign_m = %c\nmantisaa = %s\nsign_e = %c\nexponent = %d\n", num->sign_m, num->mantissa, num->sign_e, num->exponent);
     }
     return 0;
@@ -149,8 +154,72 @@ void find_mantissa_float(char *str, char mantissa[40])
     mantissa[j] = '\0';
 }
 
+// void find_exp(char *str, char *sign_e, int *exponent)
+// {
+//     printf("FIND_EXP INPUT: '%s'\n", str);
+//     // 1. Найдём часть до 'E' (если есть)
+//     char *e_pos = strchr(str, 'E');
+//     if (!e_pos)
+//         e_pos = strchr(str, 'e');
+
+//     int explicit_exp = 0;
+//     if (e_pos)
+//         explicit_exp = atoi(e_pos + 1);
+
+//     // 2. Найдём точку
+//     char *dot_pos = strchr(str, '.');
+
+//     // 3. Ищем первую значащую цифру
+//     int idx_first_digit = -1;
+//     for (int i = 0; str[i] != '\0' && str + i != e_pos; i++)
+//     {
+//         if (isdigit(str[i]) && str[i] != '0')
+//         {
+//             idx_first_digit = i;
+//             break;
+//         }
+//     }
+
+//     if (idx_first_digit == -1)
+//     {
+//         // все нули
+//         *sign_e = '+';
+//         *exponent = 0;
+//         return;
+//     }
+
+//     // 4. Считаем экспоненту
+//     int exp_val = explicit_exp;
+
+//     if (dot_pos)
+//     {
+//         if (idx_first_digit < (dot_pos - str))
+//             // первая цифра до точки
+//             exp_val += (dot_pos - str) - idx_first_digit;
+//         else
+//             // первая цифра после точки
+//             exp_val -= (idx_first_digit - (dot_pos - str));
+//     }
+//     else
+//         // точки нет
+//         exp_val += (strlen(str) - idx_first_digit);
+
+//     // 5. Записываем знак/значение
+//     if (exp_val >= 0)
+//     {
+//         *sign_e = '+';
+//         *exponent = exp_val;
+//     }
+//     else
+//     {
+//         *sign_e = '-';
+//         *exponent = -exp_val;
+//     }
+// }
+
 void find_exp(char *str, char *sign_e, int *exponent)
 {
+    // printf("FIND_EXP INPUT: '%s'\n", str);
     // 1. Найдём часть до 'E' (если есть)
     char *e_pos = strchr(str, 'E');
     if (!e_pos)
@@ -192,7 +261,7 @@ void find_exp(char *str, char *sign_e, int *exponent)
             exp_val += (dot_pos - str) - idx_first_digit;
         else
             // первая цифра после точки
-            exp_val -= (idx_first_digit - (dot_pos - str));
+            exp_val -= (idx_first_digit - (dot_pos - str) - 1); // 👈 ИСПРАВЛЕНИЕ!
     }
     else
         // точки нет

@@ -102,31 +102,46 @@ int multiply_long_numbers(const long_number_t *a, const long_number_t *b, long_n
         return 0;
     }
 
+    long_number_t a_norm = *a;
+    long_number_t b_norm = *b;
+
+    normalize_mantissa(a_norm.mantissa, &a_norm.exponent, &a_norm.sign_e);
+    normalize_mantissa(b_norm.mantissa, &b_norm.exponent, &b_norm.sign_e);
+
     // 3. Преобразуем мантиссы в блоки
     int a_blocks[MAX_BLOCKS], b_blocks[MAX_BLOCKS], res_blocks[MAX_BLOCKS * 2];
     int a_len, b_len, res_len;
 
-    string_to_blocks(a->mantissa, a_blocks, &a_len);
-    string_to_blocks(b->mantissa, b_blocks, &b_len);
+    string_to_blocks(a_norm.mantissa, a_blocks, &a_len);
+    string_to_blocks(b_norm.mantissa, b_blocks, &b_len);
 
     // 4. Перемножаем блоки
     multiply_blocks(a_blocks, a_len, b_blocks, b_len, res_blocks, &res_len);
-
     // 5. Преобразуем результат обратно в строку
     char temp_result[61] = {0};
     blocks_to_string(res_blocks, res_len, temp_result);
 
     // 6. Вычисляем порядок результата
     // Простое правило: порядки складываются + коррекция на длину
-    int exp_a = (a->sign_e == '+') ? a->exponent : -a->exponent;
-    int exp_b = (b->sign_e == '+') ? b->exponent : -b->exponent;
+    // printf("a->exponent = %d, b>exponent = %d\n", a->exponent, b->exponent);
+    int exp_a = (a_norm.sign_e == '+') ? a_norm.exponent : -a_norm.exponent;
+    int exp_b = (b_norm.sign_e == '+') ? b_norm.exponent : -b_norm.exponent;
+    // printf("exp_a = %d, exp_b = %d\n", exp_a, exp_b);
+
+    int len_a = strlen(a_norm.mantissa);
+    int len_b = strlen(b_norm.mantissa);
+    int len_res = strlen(temp_result);
+
     // Простая формула: порядки складываются + коррекция на переполнение
-    int result_digits = strlen(temp_result);
-    int expected_digits = strlen(a->mantissa) + strlen(b->mantissa);
-    int total_exp = exp_a + exp_b;
+    // int result_digits = strlen(temp_result);
+    // int expected_digits = strlen(a->mantissa) + strlen(b->mantissa);
+    int total_exp = exp_a + exp_b + (len_res - len_a - len_b);
+    // printf("total exp start = %d\n", total_exp);
+    // printf("result dig = %d, expected_digit = %d\n", result_digits, expected_digits);
+
     // Коррекция на переполнение (если результат короче)
-    if (result_digits < expected_digits)
-        total_exp -= (expected_digits - result_digits);
+    // if (result_digits < expected_digits)
+    //     total_exp -= (expected_digits - result_digits);
 
     if (total_exp >= 0)
     {
@@ -138,12 +153,20 @@ int multiply_long_numbers(const long_number_t *a, const long_number_t *b, long_n
         result->sign_e = '-';
         result->exponent = -total_exp;
     }
+
+    strcpy(result->mantissa, temp_result);
+    normalize_mantissa(result->mantissa, &result->exponent, &result->sign_e);
+
     // 7. Обрезаем до 40 знаков
     if (strlen(temp_result) > 40)
         temp_result[40] = '\0';
 
     // 8. Копируем мантиссу
-    strcpy(result->mantissa, temp_result);
+    // strcpy(result->mantissa, temp_result);
+    // printf("DEBUG: a_norm.mantissa='%s', len_a=%d, exp_a=%d\n", a_norm.mantissa, len_a, exp_a);
+    // printf("DEBUG: b_norm.mantissa='%s', len_b=%d, exp_b=%d\n", b_norm.mantissa, len_b, exp_b);
+    // printf("DEBUG: temp_result='%s', len_res=%d\n", temp_result, len_res);
+    // printf("DEBUG: total_exp=%d\n", total_exp);
 
     return 0;
 }
