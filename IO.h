@@ -4,8 +4,10 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
-
+#define ERR_INPUT 2
 #define ERR_FLOAT 3
+#define ERR_INT 4
+#define ERR_EXP 5
 typedef struct
 {
     char sign_m;       // Знак мантиссы: '+' или '-'

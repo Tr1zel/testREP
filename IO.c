@@ -5,9 +5,10 @@ void add_null_start_float(char *str, size_t *len_str);
 int input_float(long_number_t *num, char num_str[41], size_t *len_num);
 int input_int(long_number_t *num, char num_str[41]);
 void find_mantissa_float(char *str, char mantissa[40]);
-void find_exp(char *str, char *sing_e, int *exponent);
+int find_exp(char *str, char *sing_e, int *exponent);
 int only_zeros_before_dot(const char *str);
 void add_sign_if_missing(char *str, size_t *len_str);
+int validate_input_string(const char *str);
 
 int parse_input(long_number_t *first_num, long_number_t *second_num, size_t *len_first_num, size_t *len_second_num)
 {
@@ -15,50 +16,138 @@ int parse_input(long_number_t *first_num, long_number_t *second_num, size_t *len
     char second_num_str[41];
     char entry;
 
-    // printf("Введите первое число для (деления или умножения) в формате +-123.123, обязательно знак\n");
-    // printf("+---------1---------2---------3---------4\n");
+    printf("Введите первое число для умножения в формате +-123.123\n");
+    printf("+---------1---------2---------3---------4\n");
 
     if (scanf("%38s%c", first_num_str, &entry) != 2 || entry != '\n')
     {
         printf("fail scanf first num\n");
         return 1;
     }
+
+    if (validate_input_string(first_num_str) != 0)
+    {
+        printf("Недопустимые символы в числе!\n");
+        return 1;
+    }
+
     *len_first_num = strlen(first_num_str);
     add_sign_if_missing(first_num_str, len_first_num);
 
-    if (strchr(first_num_str, '.') == NULL && (strchr(first_num_str, 'e') == NULL || strchr(first_num_str, 'E') == NULL))
-        input_int(first_num, first_num_str);
-    if (strchr(first_num_str, '.') != NULL || (strchr(first_num_str, 'e') != NULL || strchr(first_num_str, 'E') != NULL))
-        input_float(first_num, first_num_str, len_first_num);
-    // printf("mantissa = %s, expo = %d\n", first_num->mantissa, first_num->exponent);
+    if (strchr(first_num_str, '.') == NULL && strchr(first_num_str, 'e') == NULL && strchr(first_num_str, 'E') == NULL)
+    {
+        if (input_int(first_num, first_num_str) != 0)
+        {
+            printf("Ошибка в вводе целого числа!\n");
+            return ERR_INT;
+        }
+    }
+    else if (strchr(first_num_str, '.') != NULL || strchr(first_num_str, 'e') != NULL || strchr(first_num_str, 'E') != NULL)
+    {
+        if (input_float(first_num, first_num_str, len_first_num) != 0)
+            return ERR_FLOAT;
+    }
+    else
+    {
+        if (input_int(first_num, first_num_str) != 0)
+        {
+            printf("Ошибка в вводе целого числа!\n");
+            return ERR_INT;
+        }
+    }
 
-    // printf("Введите второе число для (деления или умножения) в формате +-123.123, обязательно знак\n");
-    // printf("+---------1---------2---------3---------4\n");
+    printf("Введите второе число для умножения в формате +-123.123\n");
+    printf("+---------1---------2---------3---------4\n");
 
     if (scanf("%38s%c", second_num_str, &entry) != 2 || entry != '\n')
     {
         printf("fail scanf second num\n");
         return 1;
     }
+
+    if (validate_input_string(second_num_str) != 0)
+    {
+        printf("Недопустимые символы в числе!\n");
+        return 1;
+    }
+
     *len_second_num = strlen(second_num_str);
     add_sign_if_missing(second_num_str, len_second_num);
-    if (strchr(second_num_str, '.') == NULL && (strchr(second_num_str, 'e') == NULL || strchr(second_num_str, 'E') == NULL))
-        input_int(second_num, second_num_str);
-    if (strchr(second_num_str, '.') != NULL || (strchr(second_num_str, 'e') != NULL || strchr(second_num_str, 'E') != NULL))
-        input_float(second_num, second_num_str, len_second_num);
+
+    if (strchr(second_num_str, '.') == NULL && strchr(second_num_str, 'e') == NULL && strchr(second_num_str, 'E') == NULL)
+    {
+        if (input_int(second_num, second_num_str) != 0)
+        {
+            printf("Ошибка в вводе целого числа!\n");
+            return ERR_INT;
+        }
+    }
+    else if (strchr(second_num_str, '.') != NULL || strchr(second_num_str, 'e') != NULL || strchr(second_num_str, 'E') != NULL)
+    {
+        if (input_float(second_num, second_num_str, len_second_num) != 0)
+            return ERR_FLOAT;
+    }
+    else
+    {
+        if (input_int(second_num, second_num_str) != 0)
+        {
+            printf("Ошибка в вводе целого числа!\n");
+            return ERR_INT;
+        }
+    }
+
     return 0;
+}
+
+int validate_input_string(const char *str)
+{
+    if (str == NULL)
+        return -1;
+
+    int i = 0;
+    if (str[0] == '+' || str[0] == '-')
+        i = 1;
+
+    int dot_count = 0;
+    int e_count = 0;
+
+    for (; str[i] != '\0'; i++)
+    {
+        if (isdigit(str[i]))
+            continue;
+        else if (str[i] == '.')
+        {
+            dot_count++;
+            if (dot_count > 1)
+                return -1;
+        }
+        else if (str[i] == 'e' || str[i] == 'E')
+        {
+            e_count++;
+            if (e_count > 1)
+                return -1;
+
+            if (str[i + 1] == '+' || str[i + 1] == '-')
+            {
+                i++;
+                if (str[i + 1] == '\0')
+                    return -1;
+            }
+        }
+        else
+            return -1;
+    }
+
+    return 0; // Всё в порядке
 }
 
 int input_int(long_number_t *num, char num_str[41])
 {
-    // Теперь знак всегда есть (добавляется автоматически)
     num->sign_m = num_str[0];
 
-    // Проверяем длину мантиссы
     size_t mantissa_len = strlen(num_str + 1);
     if (mantissa_len > 30)
     {
-        // Обрезаем до 30 цифр
         strncpy(num->mantissa, num_str + 1, 30);
         num->mantissa[30] = '\0';
         printf("Предупреждение: число обрезано до 30 цифр\n");
@@ -66,39 +155,41 @@ int input_int(long_number_t *num, char num_str[41])
     else
         strcpy(num->mantissa, num_str + 1);
 
-    if (strchr(num_str, '.') == NULL && (strchr(num_str, 'e') == NULL || strchr(num_str, 'E') == NULL))
+    if (strchr(num_str, '.') == NULL && strchr(num_str, 'e') == NULL && strchr(num_str, 'E') == NULL)
     {
         num->sign_e = '+';
-        // Порядок = количество цифр в числе
         num->exponent = strlen(num->mantissa);
     }
-    // printf("sign_m = %c\nmantisaa = %s\nsign_e = %c\nexponent = %d\n", num->sign_m, num->mantissa, num->sign_e, num->exponent);
 
     return 0;
 }
 
 int input_float(long_number_t *num, char num_str[41], size_t *len_num)
 {
-    // Теперь знак всегда есть (добавляется автоматически)
     num->sign_m = num_str[0];
     if (count_letter(num_str, '.') > 1 || count_letter(num_str, 'e') > 1 || count_letter(num_str, 'E') > 1)
+    {
+        printf("Ошибка в вводе действительного числа!\n");
         return ERR_FLOAT;
-
+    }
     if ((strchr(num_str, '.') - num_str) == 1) // если нет нуля (+.0123)
     {
         add_null_start_float(num_str, len_num);
         find_mantissa_float(num_str, num->mantissa);
-        find_exp(num_str, &num->sign_e, &num->exponent);
-        // printf("sign_m = %c\nmantisaa = %s\nsign_e = %c\nexponent = %d\n", num->sign_m, num->mantissa, num->sign_e, num->exponent);
+        if (find_exp(num_str, &num->sign_e, &num->exponent) != 0)
+        {
+            printf("Проверьте порядок числа!\n");
+            return ERR_EXP;
+        }
     }
     else
     {
         find_mantissa_float(num_str, num->mantissa);
-        // printf("mantissa = %s\n", num->mantissa);
-        find_exp(num_str, &num->sign_e, &num->exponent);
-        // printf("exp = %d\n", num->exponent);
-
-        // printf("sign_m = %c\nmantisaa = %s\nsign_e = %c\nexponent = %d\n", num->sign_m, num->mantissa, num->sign_e, num->exponent);
+        if (find_exp(num_str, &num->sign_e, &num->exponent) != 0)
+        {
+            printf("Проверьте порядок числа!\n");
+            return ERR_EXP;
+        }
     }
     return 0;
 }
@@ -115,7 +206,7 @@ int count_letter(char *str, char ch)
 void add_null_start_float(char *str, size_t *len_str)
 {
     (*len_str) += 2;
-    char new_str[43]; // проверить что длина мантиссы больше чем предел
+    char new_str[43];
     new_str[0] = str[0];
     new_str[1] = '0';
     strcat(new_str, (str) + 1);
@@ -127,7 +218,6 @@ void find_mantissa_float(char *str, char mantissa[40])
     int j = 0;
     int found_non_zero = 0;
 
-    // Находим конец числовой части
     int end_pos = strlen(str);
     char *e_pos = strchr(str, 'E');
     if (e_pos == NULL)
@@ -135,7 +225,6 @@ void find_mantissa_float(char *str, char mantissa[40])
     if (e_pos != NULL)
         end_pos = e_pos - str;
 
-    // Извлекаем все цифры, убирая ведущие нули
     for (int i = 0; i < end_pos && j < 30; i++)
         if (isdigit(str[i]))
             if (found_non_zero || str[i] != '0')
@@ -154,73 +243,8 @@ void find_mantissa_float(char *str, char mantissa[40])
     mantissa[j] = '\0';
 }
 
-// void find_exp(char *str, char *sign_e, int *exponent)
-// {
-//     printf("FIND_EXP INPUT: '%s'\n", str);
-//     // 1. Найдём часть до 'E' (если есть)
-//     char *e_pos = strchr(str, 'E');
-//     if (!e_pos)
-//         e_pos = strchr(str, 'e');
-
-//     int explicit_exp = 0;
-//     if (e_pos)
-//         explicit_exp = atoi(e_pos + 1);
-
-//     // 2. Найдём точку
-//     char *dot_pos = strchr(str, '.');
-
-//     // 3. Ищем первую значащую цифру
-//     int idx_first_digit = -1;
-//     for (int i = 0; str[i] != '\0' && str + i != e_pos; i++)
-//     {
-//         if (isdigit(str[i]) && str[i] != '0')
-//         {
-//             idx_first_digit = i;
-//             break;
-//         }
-//     }
-
-//     if (idx_first_digit == -1)
-//     {
-//         // все нули
-//         *sign_e = '+';
-//         *exponent = 0;
-//         return;
-//     }
-
-//     // 4. Считаем экспоненту
-//     int exp_val = explicit_exp;
-
-//     if (dot_pos)
-//     {
-//         if (idx_first_digit < (dot_pos - str))
-//             // первая цифра до точки
-//             exp_val += (dot_pos - str) - idx_first_digit;
-//         else
-//             // первая цифра после точки
-//             exp_val -= (idx_first_digit - (dot_pos - str));
-//     }
-//     else
-//         // точки нет
-//         exp_val += (strlen(str) - idx_first_digit);
-
-//     // 5. Записываем знак/значение
-//     if (exp_val >= 0)
-//     {
-//         *sign_e = '+';
-//         *exponent = exp_val;
-//     }
-//     else
-//     {
-//         *sign_e = '-';
-//         *exponent = -exp_val;
-//     }
-// }
-
-void find_exp(char *str, char *sign_e, int *exponent)
+int find_exp(char *str, char *sign_e, int *exponent)
 {
-    // printf("FIND_EXP INPUT: '%s'\n", str);
-    // 1. Найдём часть до 'E' (если есть)
     char *e_pos = strchr(str, 'E');
     if (!e_pos)
         e_pos = strchr(str, 'e');
@@ -229,10 +253,8 @@ void find_exp(char *str, char *sign_e, int *exponent)
     if (e_pos)
         explicit_exp = atoi(e_pos + 1);
 
-    // 2. Найдём точку
     char *dot_pos = strchr(str, '.');
 
-    // 3. Ищем первую значащую цифру
     int idx_first_digit = -1;
     for (int i = 0; str[i] != '\0' && str + i != e_pos; i++)
     {
@@ -248,10 +270,9 @@ void find_exp(char *str, char *sign_e, int *exponent)
         // все нули
         *sign_e = '+';
         *exponent = 0;
-        return;
+        return 0;
     }
 
-    // 4. Считаем экспоненту
     int exp_val = explicit_exp;
 
     if (dot_pos)
@@ -261,13 +282,13 @@ void find_exp(char *str, char *sign_e, int *exponent)
             exp_val += (dot_pos - str) - idx_first_digit;
         else
             // первая цифра после точки
-            exp_val -= (idx_first_digit - (dot_pos - str) - 1); // 👈 ИСПРАВЛЕНИЕ!
+            exp_val -= (idx_first_digit - (dot_pos - str) - 1);
     }
     else
         // точки нет
         exp_val += (strlen(str) - idx_first_digit);
-
-    // 5. Записываем знак/значение
+    if (exp_val > 99999 || exp_val < -99999)
+        return ERR_EXP;
     if (exp_val >= 0)
     {
         *sign_e = '+';
@@ -278,11 +299,16 @@ void find_exp(char *str, char *sign_e, int *exponent)
         *sign_e = '-';
         *exponent = -exp_val;
     }
+
+    return 0;
 }
 
 int only_zeros_before_dot(const char *str)
 {
     char *dot_pos = strchr(str, '.');
+    if (dot_pos == NULL)
+        return 0;
+
     for (const char *p = str; p < dot_pos; p++)
         if (*p != '0' && *p != '+' && *p != '-')
             return 0;
@@ -291,13 +317,10 @@ int only_zeros_before_dot(const char *str)
 
 void add_sign_if_missing(char *str, size_t *len_str)
 {
-    // Проверяем, есть ли знак в начале строки
     if (str[0] != '+' && str[0] != '-')
     {
-        // Сдвигаем строку вправо на 1 позицию
         for (int i = *len_str; i >= 0; i--)
             str[i + 1] = str[i];
-        // Добавляем знак +
         str[0] = '+';
         (*len_str)++;
     }
@@ -306,7 +329,6 @@ void add_sign_if_missing(char *str, size_t *len_str)
 void remove_trailing_zeros(char *mantissa)
 {
     int len = strlen(mantissa);
-    // Убираем нули с конца, оставляя минимум одну цифру
     while (len > 1 && mantissa[len - 1] == '0')
     {
         mantissa[len - 1] = '\0';
@@ -316,7 +338,6 @@ void remove_trailing_zeros(char *mantissa)
 
 void output_num(long_number_t result_num)
 {
-    // Убираем лишние нули перед выводом
     remove_trailing_zeros(result_num.mantissa);
     printf("%c0.%s E %c%d\n", result_num.sign_m, result_num.mantissa, result_num.sign_e, result_num.exponent);
 }

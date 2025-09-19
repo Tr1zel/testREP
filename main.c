@@ -9,7 +9,13 @@
 выдать в форме ±0.m1 Е ±K1, где m1 - до 40 значащих
 цифр, а K1 - до 5 цифр.
 
-макс длина 38 символов строки, если больше то надо округлять
+
+Входные данные:
+знак необязательно.
+мантисса не более 30 знаков.
+знак порядка обязательно.
+Е/е возможно любой вариант.
+порядок не более 5 цифр.
 */
 
 int main(void)
@@ -19,9 +25,9 @@ int main(void)
     long_number_t first_num;
     long_number_t second_num;
     long_number_t result_num;
-    parse_input(&first_num, &second_num, &len_first_num, &len_second_num);
+    if (parse_input(&first_num, &second_num, &len_first_num, &len_second_num) != 0)
+        return ERR_INPUT;
     multiply_long_numbers(&first_num, &second_num, &result_num);
-    // printf("sm = %c, mantissa = %s, se = %c, exp = %d\n", result_num.sign_m, result_num.mantissa, result_num.sign_e, result_num.exponent);
     output_num(result_num);
     return 0;
 }
