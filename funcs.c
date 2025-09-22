@@ -10,7 +10,6 @@ void normalize_mantissa(char *mantissa, int *exponent, char *sign_e)
     int start = 0;
     while (mantissa[start] == '0' && mantissa[start + 1] != '\0')
         start++;
-
     if (start > 0)
     {
         memmove(mantissa, mantissa + start, strlen(mantissa) - start + 1);
@@ -86,7 +85,6 @@ int multiply_long_numbers(const long_number_t *a, const long_number_t *b, long_n
         result->sign_e = '+';
         return 0;
     }
-
     long_number_t a_norm = *a;
     long_number_t b_norm = *b;
 
@@ -101,7 +99,7 @@ int multiply_long_numbers(const long_number_t *a, const long_number_t *b, long_n
 
     multiply_blocks(a_blocks, a_len, b_blocks, b_len, res_blocks, &res_len);
 
-    char temp_result[61] = {0};
+    char temp_result[80] = {0};
     blocks_to_string(res_blocks, res_len, temp_result);
 
     int exp_a = (a_norm.sign_e == '+') ? a_norm.exponent : -a_norm.exponent;
@@ -124,11 +122,21 @@ int multiply_long_numbers(const long_number_t *a, const long_number_t *b, long_n
         result->exponent = -total_exp;
     }
 
-    strcpy(result->mantissa, temp_result);
-    normalize_mantissa(result->mantissa, &result->exponent, &result->sign_e);
+    if (len_res > 40)
+    {
+        strncpy(result->mantissa, temp_result, 40);
+        result->mantissa[40] = '\0';
+        len_res = 40;
+    }
+    else
+        strcpy(result->mantissa, temp_result);
 
-    if (strlen(temp_result) > 40)
-        temp_result[40] = '\0';
+    normalize_mantissa(result->mantissa, &result->exponent, &result->sign_e);
+    if (result->exponent > 99999 || result->exponent < -99999)
+    {
+        printf("Ошибка большой порядок в ответе!\n");
+        return ERR_EXP;
+    }
 
     return 0;
 }

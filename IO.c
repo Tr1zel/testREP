@@ -12,12 +12,12 @@ int validate_input_string(const char *str);
 
 int parse_input(long_number_t *first_num, long_number_t *second_num, size_t *len_first_num, size_t *len_second_num)
 {
-    char first_num_str[41];
-    char second_num_str[41];
+    char first_num_str[42];
+    char second_num_str[42];
     char entry;
 
-    printf("Введите первое число для умножения в формате +-123.123\n");
-    printf("+---------1---------2---------3---------4\n");
+    // printf("Введите первое число для умножения в формате +-123.123\n");
+    // printf("+---------1---------2---------3---------4\n");
 
     if (scanf("%40s%c", first_num_str, &entry) != 2 || entry != '\n')
     {
@@ -37,27 +37,16 @@ int parse_input(long_number_t *first_num, long_number_t *second_num, size_t *len
     if (strchr(first_num_str, '.') == NULL && strchr(first_num_str, 'e') == NULL && strchr(first_num_str, 'E') == NULL)
     {
         if (input_int(first_num, first_num_str) != 0)
-        {
-            printf("Ошибка в вводе целого числа!\n");
             return ERR_INT;
-        }
-    }
-    else if (strchr(first_num_str, '.') != NULL || strchr(first_num_str, 'e') != NULL || strchr(first_num_str, 'E') != NULL)
-    {
-        if (input_float(first_num, first_num_str, len_first_num) != 0)
-            return ERR_FLOAT;
     }
     else
     {
-        if (input_int(first_num, first_num_str) != 0)
-        {
-            printf("Ошибка в вводе целого числа!\n");
-            return ERR_INT;
-        }
+        printf("Первое число должно быть целым!\n");
+        return ERR_INPUT;
     }
 
-    printf("Введите второе число для умножения в формате +-123.123\n");
-    printf("+---------1---------2---------3---------4\n");
+    // printf("Введите второе число для умножения в формате +-123.123\n");
+    // printf("+---------1---------2---------3---------4\n");
 
     if (scanf("%40s%c", second_num_str, &entry) != 2 || entry != '\n')
     {
@@ -74,26 +63,15 @@ int parse_input(long_number_t *first_num, long_number_t *second_num, size_t *len
     *len_second_num = strlen(second_num_str);
     add_sign_if_missing(second_num_str, len_second_num);
 
-    if (strchr(second_num_str, '.') == NULL && strchr(second_num_str, 'e') == NULL && strchr(second_num_str, 'E') == NULL)
-    {
-        if (input_int(second_num, second_num_str) != 0)
-        {
-            printf("Ошибка в вводе целого числа!\n");
-            return ERR_INT;
-        }
-    }
-    else if (strchr(second_num_str, '.') != NULL || strchr(second_num_str, 'e') != NULL || strchr(second_num_str, 'E') != NULL)
+    if (strchr(second_num_str, '.') != NULL || strchr(second_num_str, 'e') != NULL || strchr(second_num_str, 'E') != NULL)
     {
         if (input_float(second_num, second_num_str, len_second_num) != 0)
             return ERR_FLOAT;
     }
     else
     {
-        if (input_int(second_num, second_num_str) != 0)
-        {
-            printf("Ошибка в вводе целого числа!\n");
-            return ERR_INT;
-        }
+        printf("Второе число должно быть вещественным!\n");
+        return ERR_INPUT;
     }
 
     return 0;
@@ -138,7 +116,7 @@ int validate_input_string(const char *str)
             return -1;
     }
 
-    return 0; // Всё в порядке
+    return 0;
 }
 
 int input_int(long_number_t *num, char num_str[41])
@@ -146,15 +124,16 @@ int input_int(long_number_t *num, char num_str[41])
     num->sign_m = num_str[0];
 
     size_t mantissa_len = strlen(num_str + 1);
-    if (mantissa_len > 30)
+    if (mantissa_len > 39)
     {
-        strncpy(num->mantissa, num_str + 1, 30);
-        num->mantissa[30] = '\0';
-        printf("Предупреждение: число обрезано до 30 цифр\n");
+        printf("Ошибка, целое число должно быть до 40 цифр\n");
+        return ERR_INT;
     }
     else
-        strcpy(num->mantissa, num_str + 1);
-
+    {
+        strncpy(num->mantissa, num_str + 1, 39);
+        num->mantissa[39] = '\0';
+    }
     if (strchr(num_str, '.') == NULL && strchr(num_str, 'e') == NULL && strchr(num_str, 'E') == NULL)
     {
         num->sign_e = '+';
@@ -225,8 +204,8 @@ void find_mantissa_float(char *str, char mantissa[40])
     if (e_pos != NULL)
         end_pos = e_pos - str;
 
-    for (int i = 0; i < end_pos && j < 30; i++)
-        if (isdigit(str[i]))
+    for (int i = 0; i < end_pos && j < 39; i++)
+        if (isdigit(str[i]) && j < 39)
             if (found_non_zero || str[i] != '0')
             {
                 mantissa[j] = str[i];
@@ -240,7 +219,10 @@ void find_mantissa_float(char *str, char mantissa[40])
         j = 1;
     }
 
-    mantissa[j] = '\0';
+    if (j < 40)
+        mantissa[j] = '\0';
+    else
+        mantissa[39] = '\0';
 }
 
 int find_exp(char *str, char *sign_e, int *exponent)
@@ -267,7 +249,6 @@ int find_exp(char *str, char *sign_e, int *exponent)
 
     if (idx_first_digit == -1)
     {
-        // все нули
         *sign_e = '+';
         *exponent = 0;
         return 0;
@@ -275,20 +256,22 @@ int find_exp(char *str, char *sign_e, int *exponent)
 
     int exp_val = explicit_exp;
 
-    if (dot_pos)
-    {
-        if (idx_first_digit < (dot_pos - str))
-            // первая цифра до точки
-            exp_val += (dot_pos - str) - idx_first_digit;
-        else
-            // первая цифра после точки
-            exp_val -= (idx_first_digit - (dot_pos - str) - 1);
-    }
-    else
-        // точки нет
-        exp_val += (strlen(str) - idx_first_digit);
     if (exp_val > 99999 || exp_val < -99999)
         return ERR_EXP;
+
+    if (dot_pos)
+    {
+        int dot_index = dot_pos - str;
+        if (idx_first_digit < dot_index)
+            exp_val += dot_index - idx_first_digit;
+        else
+            exp_val -= (idx_first_digit - dot_index - 1);
+    }
+    else
+    {
+        exp_val += (strlen(str) - idx_first_digit);
+    }
+
     if (exp_val >= 0)
     {
         *sign_e = '+';

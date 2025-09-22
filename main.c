@@ -9,12 +9,12 @@
 выдать в форме ±0.m1 Е ±K1, где m1 - до 40 значащих
 цифр, а K1 - до 5 цифр.
 
-
 Входные данные:
 знак необязательно.
-мантисса не более 30 знаков.
+мантисса в действительном не более 30 знаков.
+длина целого не более 40.
 знак порядка обязательно.
-Е/е возможно любой вариант.
+e обязательно.
 порядок не более 5 цифр.
 */
 
@@ -25,9 +25,15 @@ int main(void)
     long_number_t first_num;
     long_number_t second_num;
     long_number_t result_num;
+
     if (parse_input(&first_num, &second_num, &len_first_num, &len_second_num) != 0)
         return ERR_INPUT;
-    multiply_long_numbers(&first_num, &second_num, &result_num);
+
+    if (multiply_long_numbers(&first_num, &second_num, &result_num) != 0)
+    {
+        printf("Ошибка в процессе вычисления числа в результате!\n");
+        return 1;
+    }
     output_num(result_num);
     return 0;
 }
