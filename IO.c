@@ -16,8 +16,8 @@ int parse_input(long_number_t *first_num, long_number_t *second_num, size_t *len
     char second_num_str[42];
     char entry;
 
-    // printf("Введите первое число для умножения в формате +-123.123\n");
-    // printf("+---------1---------2---------3---------4\n");
+    printf("Введите первое целое число для умножения в формате +-123\n");
+    printf("+---------1---------2---------3---------4\n");
 
     if (scanf("%40s%c", first_num_str, &entry) != 2 || entry != '\n')
     {
@@ -45,8 +45,8 @@ int parse_input(long_number_t *first_num, long_number_t *second_num, size_t *len
         return ERR_INPUT;
     }
 
-    // printf("Введите второе число для умножения в формате +-123.123\n");
-    // printf("+---------1---------2---------3---------4\n");
+    printf("Введите второе действительное число для умножения в формате +-123.123\n");
+    printf("+---------1---------2---------3---------4\n");
 
     if (scanf("%40s%c", second_num_str, &entry) != 2 || entry != '\n')
     {
